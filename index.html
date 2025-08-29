@@ -82,11 +82,21 @@ function processQRCode(decodedText) {
 document.getElementById('scanBtn').addEventListener('click', function() {
     document.getElementById('qr-reader').style.display = 'block';
     const html5QrCode = new Html5Qrcode("qr-reader");
+    
     html5QrCode.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         (decodedText, decodedResult) => {
+            // On traite le QR
             processQRCode(decodedText);
+
+            // STOP la caméra après le scan
+            html5QrCode.stop().then(() => {
+                console.log("Scan terminé, caméra arrêtée");
+                document.getElementById('qr-reader').style.display = 'none';
+            }).catch(err => {
+                console.error("Erreur lors de l'arrêt de la caméra:", err);
+            });
         }
     ).catch(err => {
         console.error(err);
