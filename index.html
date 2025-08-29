@@ -142,8 +142,8 @@
     font-size: 1em;
   
 }
-</style>
 <script src="https://unpkg.com/html5-qrcode"></script>
+</style>
 </head>
 <body>
 <h1>CR Gendarmerie - LIMES Breil  La Turbie  DSI Tende</h1>
@@ -965,7 +965,7 @@ function processQRCode(text) {
 
     qrTotals.Vehicules = qrTotals.CV + qrTotals.CF;
 
-    document.getElementById('esrSummary').value =
+    document.getElementById('qrResume').value =
         `CV: ${qrTotals.CV}\nCF: ${qrTotals.CF}\nTotal véhicules: ${qrTotals.Vehicules}\nTotal personnes: ${qrTotals.Personnes}\n\nTexte scanné:\n${text}`;
 }
 
