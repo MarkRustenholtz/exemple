@@ -952,51 +952,52 @@ if ('serviceWorker' in navigator) {
 let qrTotals = { CV:0, CF:0, Vehicules:0, Personnes:0 };
 let scannedQRs = JSON.parse(localStorage.getItem('scannedQRs') || "[]");
 // Fonction pour traiter le QR
-function processQRCode(text) {
-    // Regex pour extraire chaque type de véhicule et ses CV/CF
+// Fonction pour traiter le QR et mettre à jour le state principal
+function safeProcessQRCode(text) {
   const regex = /(VL|BUS|PL|TRAIN).*?CV\s*\/\s*(\d+).*?CF\s*\/\s*(\d+)/gi;
+  let match;
 
-     while ((match = regex.exec(text)) !== null) {
+  while ((match = regex.exec(text)) !== null) {
     const type = match[1].toLowerCase(); // vl, bus, pl, train
     const cv = parseInt(match[2]);
     const cf = parseInt(match[3]);
 
-    // Ajoute directement au compteur principal
-    state.vehicules[type] += 1;  // 1 véhicule scanné
+    // Ajout direct aux compteurs principaux
+    state.vehicules[type] += 1;  // Chaque ligne scannée = 1 véhicule
     state.cv[type] += cv;
     state.cf[type] += cf;
   }
 
+  // Met à jour l'affichage
+  updateUI();
 
-    document.getElementById('qrResume').value =
-        `CV: ${qrTotals.CV}\nCF: ${qrTotals.CF}\nTotal véhicules: ${qrTotals.Vehicules}\nTotal personnes: ${qrTotals.Personnes}\n\nTexte scanné:\n${text}`;
+  // Sauvegarde automatique
+  debounceSave();
+
+  // Si tu veux afficher un résumé du QR scanné
+  document.getElementById('qrResume').value = `QR scanné et ajouté aux compteurs.\n\n${text}`;
 }
 
+// Exemple : démarrage du scan
 document.getElementById('scanQrBtn').addEventListener('click', function() {
-    const qrReader = document.getElementById('qr-reader');
-    qrReader.style.display = 'block';
+  const qrReader = document.getElementById('qr-reader');
+  qrReader.style.display = 'block';
 
-    const html5QrCode = new Html5Qrcode("qr-reader");
+  const html5QrCode = new Html5Qrcode("qr-reader");
 
-    html5QrCode.start(
-        { facingMode: "environment" }, // caméra arrière
-        { fps: 10, qrbox: 250 },
-        (decodedText, decodedResult) => {
-            processQRCode(decodedText);
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText, decodedResult) => {
+      safeProcessQRCode(decodedText);  // <-- Ici on utilise la fonction qui met à jour le compteur
 
-            // Arrêt caméra après un scan
-            html5QrCode.stop().then(() => {
-                qrReader.style.display = 'none';
-            }).catch(err => console.error("Erreur arrêt caméra:", err));
-        },
-        (errorMessage) => {
-            // optionnel : console log des erreurs de scan
-            // console.warn(errorMessage);
-        }
-    ).catch(err => console.error(err));
-	
+      html5QrCode.stop().then(() => {
+        qrReader.style.display = 'none';
+      }).catch(err => console.error("Erreur arrêt caméra:", err));
+    },
+    (errorMessage) => { /* Optionnel : console.warn(errorMessage); */ }
+  ).catch(err => console.error(err));
 });
-
     // Initialiser la page
     init();
   })();
