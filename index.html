@@ -950,21 +950,23 @@ if ('serviceWorker' in navigator) {
      }
 	 // Variables cumulatives pour QR
 let qrTotals = { CV:0, CF:0, Vehicules:0, Personnes:0 };
-
+let scannedQRs = JSON.parse(localStorage.getItem('scannedQRs') || "[]");
 // Fonction pour traiter le QR
 function processQRCode(text) {
-    const regexCV = /CV \/ (\d+)/g;
-    const regexCF = /CF \/ (\d+)/g;
-    const regexTotalPers = /TOTAL PERSONNES\s*:\s*(\d+)/;
+    // Regex pour extraire chaque type de véhicule et ses CV/CF
+  const regex = /(VL|BUS|PL|TRAIN).*?CV\s*\/\s*(\d+).*?CF\s*\/\s*(\d+)/gi;
 
-    let match;
-    while ((match = regexCV.exec(text)) !== null) qrTotals.CV += parseInt(match[1]);
-    while ((match = regexCF.exec(text)) !== null) qrTotals.CF += parseInt(match[1]);
+     while ((match = regex.exec(text)) !== null) {
+    const type = match[1].toLowerCase(); // vl, bus, pl, train
+    const cv = parseInt(match[2]);
+    const cf = parseInt(match[3]);
 
-    const totalP = text.match(regexTotalPers);
-    if(totalP) qrTotals.Personnes += parseInt(totalP[1]);
+    // Ajoute directement au compteur principal
+    state.vehicules[type] += 1;  // 1 véhicule scanné
+    state.cv[type] += cv;
+    state.cf[type] += cf;
+  }
 
-    qrTotals.Vehicules = qrTotals.CV + qrTotals.CF;
 
     document.getElementById('qrResume').value =
         `CV: ${qrTotals.CV}\nCF: ${qrTotals.CF}\nTotal véhicules: ${qrTotals.Vehicules}\nTotal personnes: ${qrTotals.Personnes}\n\nTexte scanné:\n${text}`;
@@ -992,6 +994,7 @@ document.getElementById('scanQrBtn').addEventListener('click', function() {
             // console.warn(errorMessage);
         }
     ).catch(err => console.error(err));
+	
 });
 
     // Initialiser la page
