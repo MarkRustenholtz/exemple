@@ -451,7 +451,7 @@
 </section>
 <section>
   <h2>Résumé des ESR :</h2>
-  <textarea id="esrSummary" readonly rows="20" style="font-family: monospace; white-space: pre-wrap;"></textarea>
+  <textarea id="qrResume" readonly rows="20" style="font-family: monospace; white-space: pre-wrap;"></textarea>
 </section>
 
 <script>
@@ -965,9 +965,28 @@ function processQRCode(text) {
 
     qrTotals.Vehicules = qrTotals.CV + qrTotals.CF;
 
-    document.getElementById('qrResume').innerText =
+    document.getElementById('esrSummary').value =
         `CV: ${qrTotals.CV}\nCF: ${qrTotals.CF}\nTotal véhicules: ${qrTotals.Vehicules}\nTotal personnes: ${qrTotals.Personnes}\n\nTexte scanné:\n${text}`;
 }
+
+// Bouton scan
+document.getElementById('scanQrBtn').addEventListener('click', function() {
+    const qrReader = document.getElementById('qr-reader');
+    qrReader.style.display = 'block';
+    const html5QrCode = new Html5Qrcode("qr-reader");
+
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText, decodedResult) => {
+            processQRCode(decodedText);
+
+            html5QrCode.stop().then(() => {
+                qrReader.style.display = 'none';
+            }).catch(err => console.error("Erreur arrêt caméra:", err));
+        }
+    ).catch(err => console.error(err));
+});
 
     // Initialiser la page
     init();
