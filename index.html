@@ -441,7 +441,7 @@
   <button id="generateBtn" style="background-color:#3498db; color:white; font-weight:bold; padding: 10px 20px; font-size:1.2em;">Générer compte rendu</button>
   <button id="copyBtn" style="background-color:#27ae60; color:white; font-weight:bold; padding: 10px 20px; font-size:1.2em;">Copier dans le presse-papiers</button>
   <button id="resetBtn" class="red" style="font-size:1.2em;">Effacer les données sauvegardées</button>
-  <button id="scanQrBtn" class="blue">Scanner QR</button>
+  <button id="scanQrBtn">Scanner QR</button>
   <div id="qr-reader" style="width:300px; margin-top:10px; display:none;"></div>
 </section>
 
@@ -969,21 +969,26 @@ function processQRCode(text) {
         `CV: ${qrTotals.CV}\nCF: ${qrTotals.CF}\nTotal véhicules: ${qrTotals.Vehicules}\nTotal personnes: ${qrTotals.Personnes}\n\nTexte scanné:\n${text}`;
 }
 
-// Bouton scan
 document.getElementById('scanQrBtn').addEventListener('click', function() {
     const qrReader = document.getElementById('qr-reader');
     qrReader.style.display = 'block';
+
     const html5QrCode = new Html5Qrcode("qr-reader");
 
     html5QrCode.start(
-        { facingMode: "environment" },
+        { facingMode: "environment" }, // caméra arrière
         { fps: 10, qrbox: 250 },
         (decodedText, decodedResult) => {
             processQRCode(decodedText);
 
+            // Arrêt caméra après un scan
             html5QrCode.stop().then(() => {
                 qrReader.style.display = 'none';
             }).catch(err => console.error("Erreur arrêt caméra:", err));
+        },
+        (errorMessage) => {
+            // optionnel : console log des erreurs de scan
+            // console.warn(errorMessage);
         }
     ).catch(err => console.error(err));
 });
