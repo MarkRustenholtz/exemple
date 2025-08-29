@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner QR - CR Gendarmerie</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  #totals div { margin: 5px 0; }
+  #summary { margin-top: 20px; white-space: pre-wrap; background: #f0f0f0; padding: 10px; }
+</style>
+</head>
+<body>
+
+<h2>Scanner QR Code</h2>
+<button id="scanBtn">Scan QR</button>
+<div id="qr-reader" style="width:300px; margin-top: 10px; display:none;"></div>
+
+<h3>Totaux</h3>
+<div id="totals">
+  <div>VL - CV: <span id="vlCV">0</span> / CF: <span id="vlCF">0</span></div>
+  <div>Bus - CV: <span id="busCV">0</span> / CF: <span id="busCF">0</span></div>
+  <div>PL - CV: <span id="plCV">0</span> / CF: <span id="plCF">0</span></div>
+  <div>Train - CV: <span id="trainCV">0</span> / CF: <span id="trainCF">0</span></div>
+  <div>Total Véhicules: <span id="totalVehicules">0</span></div>
+  <div>Total Personnes: <span id="totalPersonnes">0</span></div>
+</div>
+
+<h3>Résumé</h3>
+<div id="summary"></div>
+
+<script>
+let totals = {
+    vl: {cv: 0, cf: 0},
+    bus: {cv: 0, cf: 0},
+    pl: {cv: 0, cf: 0},
+    train: {cv: 0, cf: 0},
+    totalVehicules: 0,
+    totalPersonnes: 0
+};
+
+function processQRCode(decodedText) {
+    document.getElementById('summary').innerText += decodedText + "\n\n";
+
+    let lines = decodedText.split('\n');
+    lines.forEach(line => {
+        let match = line.match(/(\w+):\s*\d+\s*\/\s*(\d+)\s*CV\s*\/\s*(\d+)\s*CF/i);
+        if (match) {
+            let type = match[1].toLowerCase();
+            let cv = parseInt(match[2]);
+            let cf = parseInt(match[3]);
+
+            if (totals[type]) {
+                totals[type].cv += cv;
+                totals[type].cf += cf;
+            }
+        }
+    });
+
+    // Calcul total véhicules et total personnes
+    totals.totalVehicules = totals.vl.cv + totals.vl.cf
+                          + totals.bus.cv + totals.bus.cf
+                          + totals.pl.cv + totals.pl.cf
+                          + totals.train.cv + totals.train.cf;
+
+    totals.totalPersonnes = totals.totalVehicules;
+
+    // Affichage
+    document.getElementById('vlCV').innerText = totals.vl.cv;
+    document.getElementById('vlCF').innerText = totals.vl.cf;
+    document.getElementById('busCV').innerText = totals.bus.cv;
+    document.getElementById('busCF').innerText = totals.bus.cf;
+    document.getElementById('plCV').innerText = totals.pl.cv;
+    document.getElementById('plCF').innerText = totals.pl.cf;
+    document.getElementById('trainCV').innerText = totals.train.cv;
+    document.getElementById('trainCF').innerText = totals.train.cf;
+    document.getElementById('totalVehicules').innerText = totals.totalVehicules;
+    document.getElementById('totalPersonnes').innerText = totals.totalPersonnes;
+}
+
+document.getElementById('scanBtn').addEventListener('click', function() {
+    document.getElementById('qr-reader').style.display = 'block';
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText, decodedResult) => {
+            processQRCode(decodedText);
+        }
+    ).catch(err => {
+        console.error(err);
+    });
+});
+</script>
+
+</body>
+</html>
