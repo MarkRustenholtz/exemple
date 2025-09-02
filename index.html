@@ -991,8 +991,11 @@ function onScanSuccess(decodedText) {
       state.scansAgg[k].cf += counts[k].cf;
     });
 	
-	// Ajouter automatiquement un ESR s’il est bien formé
-if(parsed.grade && parsed.nom && parsed.nigend && parsed.crt){
+	// Vérifier si l'ESR existe déjà dans la liste (manuelle ou scannée)
+const dejaEsr = state.esrList.some(e => e.nigend === parsed.nigend);
+
+if (!dejaEsr && parsed.grade && parsed.nom && parsed.nigend && parsed.crt) {
+  // Ajouter l'ESR seulement si pas déjà dans la liste
   state.esrList.push({
     grade: parsed.grade,
     nom: parsed.nom,
@@ -1003,6 +1006,7 @@ if(parsed.grade && parsed.nom && parsed.nigend && parsed.crt){
   populateEsrSelects();
   debounceSave();
 }
+
 
 
     // Mise à jour de l'affichage et sauvegarde
