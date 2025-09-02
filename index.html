@@ -990,11 +990,24 @@ function onScanSuccess(decodedText) {
       state.scansAgg[k].cv += counts[k].cv;
       state.scansAgg[k].cf += counts[k].cf;
     });
+	
+	// Ajouter automatiquement un ESR s’il est bien formé
+if(parsed.grade && parsed.nom && parsed.nigend && parsed.crt){
+  state.esrList.push({
+    grade: parsed.grade,
+    nom: parsed.nom,
+    nigend: parsed.nigend,
+    crt: parsed.crt
+  });
+  renderEsrList();
+  populateEsrSelects();
+  debounceSave();
+}
+
 
     // Mise à jour de l'affichage et sauvegarde
     state.resumeEsr += `NIGEND ${nigend}\n${pretty}\n\n`;
     updateResumeEsrUI();
-	updateUI();
     debounceSave();
     logScan('QR ajouté : ' + nigend);
 
@@ -1019,11 +1032,7 @@ function onScanSuccess(decodedText) {
         })
         .catch(err => console.error("Erreur arrêt caméra :", err));
     }
-    function updateResumeEsrUI() {
-  document.getElementById('resumeEsr').value = state.resumeEsr;
-  document.getElementById('nbScans').textContent = state.scannedNigends.length;
-  document.getElementById('nigendList').textContent = state.scannedNigends.join(', ') || '—';
-}
+
   } catch(e) {
     console.error(e);
   }
@@ -1032,15 +1041,30 @@ function onScanSuccess(decodedText) {
 
 function parseQrPayload(raw){
   const lines = String(raw).split(/\n+/).map(l=>l.trim()).filter(Boolean);
-  let nigend='';
+  let nigend='', grade='', nom='', crt='';
   const counts={train:{v:0,cv:0,cf:0}, bus:{v:0,cv:0,cf:0}, vl:{v:0,cv:0,cf:0}, pl:{v:0,cv:0,cf:0}};
+  
   lines.forEach(l=>{
     if(/^NIGEND/i.test(l)) nigend = l.split(':')[1].trim();
+    else if(/^GRADE/i.test(l)) grade = l.split(':')[1].trim();
+    else if(/^NOM/i.test(l)) nom = l.split(':')[1].trim();
+    else if(/^CRT/i.test(l)) crt = l.split(':')[1].trim();
+
     const m = l.match(/^(Train|Bus|Vl|Pl)\s*:\s*(\d+)\s*\/\s*(\d+)\s*CV\s*\/\s*(\d+)\s*CF/i);
-    if(m){ const key=m[1].toLowerCase(); counts[key].v+=+m[2]; counts[key].cv+=+m[3]; counts[key].cf+=+m[4]; }
+    if(m){ 
+      const key=m[1].toLowerCase(); 
+      counts[key].v+=+m[2]; 
+      counts[key].cv+=+m[3]; 
+      counts[key].cf+=+m[4]; 
+    }
   });
-  const pretty = `Train: ${counts.train.v} / ${counts.train.cv} CV / ${counts.train.cf} CF\nBus: ${counts.bus.v} / ${counts.bus.cv} CV / ${counts.bus.cf} CF\nVl: ${counts.vl.v} / ${counts.vl.cv} CV / ${counts.vl.cf} CF\nPl: ${counts.pl.v} / ${counts.pl.cv} CV / ${counts.pl.cf} CF`;
-  return {nigend, counts, pretty};
+
+  const pretty = `Train: ${counts.train.v} / ${counts.train.cv} CV / ${counts.train.cf} CF
+Bus: ${counts.bus.v} / ${counts.bus.cv} CV / ${counts.bus.cf} CF
+Vl: ${counts.vl.v} / ${counts.vl.cv} CV / ${counts.vl.cf} CF
+Pl: ${counts.pl.v} / ${counts.pl.cv} CV / ${counts.pl.cf} CF`;
+
+  return {nigend, grade, nom, crt, counts, pretty};
 }
 
 function logScan(msg){
@@ -1195,4 +1219,3 @@ if ('serviceWorker' in navigator) {
 
 </body>
 </html>
-
